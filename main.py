@@ -27,8 +27,15 @@ model = VisionEncoderDecoderModel.from_pretrained('microsoft/trocr-base-printed'
 def run_model(file: UploadFile = Form(...)):
     # Load image from the provided URL
 
+    if not file:
+        return {"error": "No file uploaded"}
 
-    image = Image.open(requests.get(file.file, stream=True).raw).convert("RGB")
+        # Check if the file is an image
+    if not file.content_type.startswith("image"):
+        return {"error": "Uploaded file is not an image"}
+
+        # Load image from the uploaded file
+    image = Image.open(file.file).convert("RGB")
 
     # Process image
     pixel_values = processor(images=image, return_tensors="pt").pixel_values
