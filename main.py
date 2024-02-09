@@ -39,7 +39,3 @@ def run_model(data: Dict[str, str]):
     generated_text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
 
     return {"generated_text": generated_text}
-
-if _name_ == "_main_":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1",port=8000)
