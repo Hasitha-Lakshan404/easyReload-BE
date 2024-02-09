@@ -4,6 +4,7 @@ from starlette.middleware.cors import CORSMiddleware
 from transformers import TrOCRProcessor, VisionEncoderDecoderModel
 from PIL import Image
 import requests
+from fastapi import UploadFile, Form
 
 app = FastAPI()
 
@@ -23,13 +24,11 @@ model = VisionEncoderDecoderModel.from_pretrained('microsoft/trocr-base-printed'
 
 # Define endpoint to run the model
 @app.post("/run")
-def run_model(data: Dict[str, str]):
+def run_model(file: UploadFile = Form(...)):
     # Load image from the provided URL
-    url = data.get('url')
-    if not url:
-        return {"error": "URL not provided"}
 
-    image = Image.open(requests.get(url, stream=True).raw).convert("RGB")
+
+    image = Image.open(requests.get(file.file, stream=True).raw).convert("RGB")
 
     # Process image
     pixel_values = processor(images=image, return_tensors="pt").pixel_values
@@ -39,3 +38,27 @@ def run_model(data: Dict[str, str]):
     generated_text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
 
     return {"generated_text": generated_text}
+
+
+
+
+
+
+
+# @app.post("/run")
+# def run_model(data: Dict[str, str]):
+#     # Load image from the provided URL
+#     url = data.get('url')
+#     if not url:
+#         return {"error": "URL not provided"}
+#
+#     image = Image.open(requests.get(url, stream=True).raw).convert("RGB")
+#
+#     # Process image
+#     pixel_values = processor(images=image, return_tensors="pt").pixel_values
+#
+#     # Generate text
+#     generated_ids = model.generate(pixel_values)
+#     generated_text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
+#
+#     return {"generated_text": generated_text}
