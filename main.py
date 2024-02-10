@@ -1,9 +1,10 @@
-import requests
-from PIL import Image
+from typing import Dict
 from fastapi import FastAPI
-from fastapi import UploadFile, Form
 from starlette.middleware.cors import CORSMiddleware
 from transformers import TrOCRProcessor, VisionEncoderDecoderModel
+from PIL import Image
+import requests
+from fastapi import UploadFile, Form
 
 app = FastAPI()
 
@@ -26,31 +27,30 @@ model = VisionEncoderDecoderModel.from_pretrained('microsoft/trocr-base-printed'
 def run_model(file: UploadFile = Form(...)):
     # Load image from the provided URL
 
-    # if not file:
-    #     return {"error": "No file uploaded"}
-    #
-    #     # Check if the file is an image
-    # if not file.content_type.startswith("image"):
-    #     return {"error": "Uploaded file is not an image"}
-    #
-    #     # Load image from the uploaded file
-    # image = Image.open(file.file).convert("RGB")
+    if not file:
+        return {"error": "No file uploaded"}
 
-    url = "https://static.wikia.nocookie.net/prime-numbers/images/8/8d/10513.png/revision/latest/smart/width/386/height/259?cb=20240115095441"
-    if not url:
-        return {"error": "URL not provided"}
+        # Check if the file is an image
+    if not file.content_type.startswith("image"):
+        return {"error": "Uploaded file is not an image"}
 
-    image = Image.open(requests.get(url, stream=True).raw).convert("RGB")
+        # Load image from the uploaded file
+    image = Image.open(file.file).convert("RGB")
+
+    # Process image
+    pixel_values = processor(images=image, return_tensors="pt").pixel_values
+
+    # Generate text
+    generated_ids = model.generate(pixel_values)
+    generated_text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
+
+    return generated_text
 
 
-# Process image
-pixel_values = processor(images=image, return_tensors="pt").pixel_values
 
-# Generate text
-generated_ids = model.generate(pixel_values)
-generated_text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
 
-return generated_text
+
+
 
 # @app.post("/run")
 # def run_model(data: Dict[str, str]):
